@@ -10,4 +10,5 @@
 #control-panel {
     width: 100px;
     height: 100px;
+    z-index: 100;
 }

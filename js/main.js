@@ -90,25 +90,16 @@ source.addEventListener("action", function(event) {
   }
 });
 
-function stringifyPosition(position) {
-    return position.top + "," + position.left;
-}
-function destringifyPosition(str) {
-    var obj = {};
-    var split = str.split(",");
-    obj.top = parseInt(split[0]);
-    obj.left = parseInt(split[1]);
-    return obj;
-}
-
 $(document).ready(function() {
 
     $("#save-button").click(function() {
         $(".element-wrap").each(function(i, element) {
             element = $(element);  //Why jQuery doesn't return these as jQuery objects is beyond me.
             var name = element.data("name");
-            localStorage.setItem(name + ".position", stringifyPosition(element.position()));
-            localStorage.setItem(name + ".size", element.width() + "," + element.height());
+            var data = element.position();
+            data.width = element.width();
+            data.height = element.height();
+            localStorage.setItem(name, JSON.stringify(data));
         });
     });
     $("#refresh-button").click(function() {
@@ -128,15 +119,10 @@ $(document).ready(function() {
         $(".element-wrap").each(function(i, element) {
             element = $(element);  //Why jQuery doesn't return these as jQuery objects is beyond me.
             var name = element.data("name");
-            var position = localStorage.getItem(name + ".position");
-            var size = localStorage.getItem(name + ".size");
-            if (position !== null) {
-                var newPos = destringifyPosition(position);
-                element.css({top: newPos.top, left: newPos.left});
-            }
-            if (size !== null) {
-                var newSize = destringifyPosition(size);
-                element.css({width: newSize.top, height: newSize.left});
+            var stored_data = localStorage.getItem(name);
+            if (stored_data !== null) {
+                stored_data = JSON.parse(stored_data);
+                element.css(stored_data);
             }
         });
         console.log("Loaded positions");

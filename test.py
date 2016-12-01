@@ -6,7 +6,7 @@ import math
 
 server_thread = Thread(target=dashboard.app.run)
 server_thread.start()
-dt = .05
+dt = .2
 t = dt
 
 log = math.log(t)
