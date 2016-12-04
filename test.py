@@ -1,6 +1,6 @@
 import dashboard
 from threading import Thread
-from random import random
+from random import randint
 from time import sleep
 import math
 
@@ -17,6 +17,7 @@ dashboard.graph("log(time)", lambda: log)
 dashboard.graph("time", lambda: t)
 dashboard.graph("sqrt(time)", lambda: sqrt)
 dashboard.graph("time^2", lambda: sq)
+dashboard.graph("Random", lambda: randint(-10, 10))
 
 try:
     while True:

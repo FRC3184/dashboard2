@@ -1,7 +1,6 @@
 var name_map = {};
 var buffer_size = 200;
 var my_grid = [100, 100];
-Chart.defaults.global.maintainAspectRatio = false;
 
 var drag_opts = {
     grid: my_grid,
@@ -9,7 +8,19 @@ var drag_opts = {
         ui.position = roundVector(ui.position, my_grid);
     }
 };
-var resize_opts = {grid: my_grid};
+
+function fitToContainer(canvas){
+  // Make it visually fill the positioned parent
+  canvas.style.width ='100%';
+  canvas.style.height='100%';
+  // ...then set the internal size to match
+  canvas.width  = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+}
+
+var resize_opts = {grid: my_grid, resize: function(event, ui) {
+  fitToContainer(ui.element.children("canvas").get(0));
+}};
 
 /*
  * Rounds both parts of vec_k to nearest roundMagnitude_k
@@ -22,14 +33,6 @@ function roundVector(vec, round) {
     return ret;
 }
 
-var update_chart = function(data_t, data_y) {
-  this.data.datasets[0].data.push({x: data_t, y: data_y});
-  if (this.data.datasets[0].data.length > buffer_size) {
-    this.data.datasets[0].data = this.data.datasets[0].data.slice(1);
-  }
-  this.update();
-};
-
 var make_chart = function(data) {
   console.log(data.name);
   var chart_element = $("<canvas width=\"400px\" height=\"400px\" class=\"chart\"></canvas>");
@@ -37,28 +40,9 @@ var make_chart = function(data) {
   chart_wrapper = $("<div class=\"element-wrap ui-widget-content\" data-name=\"" + data.name + "\"></div>");
   chart_element.wrap(chart_wrapper);
 
-  var chart = new Chart(chart_element, {
-    type: "line",
-    data: {
-      datasets: [{
-        label: data.name,
-        data: []
-      }]
-    },
-    options: {
-      maintainAspectRatio: false,
-      scales: {
-        xAxes: [{
-          type: 'linear',
-          position: 'bottom'
-        }]
-      }
-    }
-  });
+  var my_chart = new Chart(chart_element, data.name);
 
-  name_map[data.name] = chart;
-  chart.update_data = update_chart;
-
+  name_map[data.name] = my_chart;
 };
 
 var source = new EventSource("/events");
@@ -73,7 +57,7 @@ source.addEventListener('data', function(event) {
   var y = data.value;
 
   if (name in name_map) {
-    name_map[name].update_data(t, y);
+    name_map[name].add_point({x: t, y: y});
   }
 });
 source.addEventListener("action", function(event) {
@@ -123,6 +107,9 @@ $(document).ready(function() {
             if (stored_data !== null) {
                 stored_data = JSON.parse(stored_data);
                 element.css(stored_data);
+            }
+            if (element.children("canvas").length > 0) {
+                fitToContainer(element.children("canvas").get(0));
             }
         });
         console.log("Loaded positions");
