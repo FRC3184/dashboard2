@@ -19,7 +19,10 @@ function fitToContainer(canvas){
 }
 
 var resize_opts = {grid: my_grid, resize: function(event, ui) {
-  fitToContainer(ui.element.children("canvas").get(0));
+  var canvases = ui.element.children("canvas");
+  if (canvases.length > 0) {
+    fitToContainer(canvases.get(0));
+  }
 }};
 
 /*
@@ -39,6 +42,8 @@ var make_chart = function(data) {
   chart_element.appendTo("#dashboard");
   chart_wrapper = $("<div class=\"element-wrap ui-widget-content\" data-name=\"" + data.name + "\"></div>");
   chart_element.wrap(chart_wrapper);
+
+  $("#elements-toggle").append($("<label for='__toggle-"+data.name+"'>"+data.name+"</label><input type='checkbox' class='display-toggle' id='__toggle-"+data.name+"' data-target='"+data.name+"' checked /><br /> "));
 
   var my_chart = new Chart(chart_element, data.name);
 
@@ -83,6 +88,7 @@ $(document).ready(function() {
             var data = element.position();
             data.width = element.width();
             data.height = element.height();
+            data.shown = !element.is(":hidden");
             localStorage.setItem(name, JSON.stringify(data));
         });
     });
@@ -92,11 +98,37 @@ $(document).ready(function() {
     });
 
     setTimeout(function() {
-        $(".element-wrap").draggable(drag_opts).resizable(resize_opts).draggable("disable");
+        $(".element-wrap").draggable(drag_opts).resizable(resize_opts).draggable("disable").resizable("disable");
 
         $("#editable-check").change(function() {
             $(".element-wrap").draggable(this.checked ? "enable" : "disable");
             $(".element-wrap").resizable(this.checked ? "enable" : "disable");
+        });
+        $(".display-toggle").click(function() {
+            var name = $(this).data("target");
+
+            var chart = name_map[name].element;
+            var elem = chart.parent();
+            if ($(this).is(":checked")) {
+                elem.show({complete: function() {
+
+                    var stored_data = localStorage.getItem(name);
+                    if (stored_data !== null) {
+                        stored_data = JSON.parse(stored_data);
+                        var css = {
+                            width: stored_data.width,
+                            height: stored_data.height,
+                            left: stored_data.left,
+                            top: stored_data.top
+                        };
+                        elem.css(css);
+                    }
+                    fitToContainer(chart.get(0));
+                }});
+            }
+            else {
+                elem.hide();
+            }
         });
 
         console.log("Loading positions...");
@@ -106,7 +138,17 @@ $(document).ready(function() {
             var stored_data = localStorage.getItem(name);
             if (stored_data !== null) {
                 stored_data = JSON.parse(stored_data);
-                element.css(stored_data);
+                var css = {
+                    width: stored_data.width,
+                    height: stored_data.height,
+                    left: stored_data.left,
+                    top: stored_data.top
+                };
+                element.css(css);
+                if (!stored_data.shown) {
+                    element.hide();
+                    $("input[data-target='"+name+"']").prop("checked", false);
+                }
             }
             if (element.children("canvas").length > 0) {
                 fitToContainer(element.children("canvas").get(0));
