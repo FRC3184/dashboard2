@@ -1,10 +1,12 @@
 import dashboard
+import dashboard_server
 from threading import Thread
 from random import randint
 from time import sleep
 import math
 
-server_thread = Thread(target=dashboard.app.run)
+server_thread = Thread(target=dashboard_server.run)
+server_thread.daemon = True
 server_thread.start()
 dt = .2
 t = dt
