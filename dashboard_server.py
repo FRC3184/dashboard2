@@ -6,9 +6,10 @@ import time
 # Currently very limited. Does not serve images. Cannot deal with different mimetypes in the same directory...
 
 paths = {}
+methods = {}
 
 
-def add_path(path_name, handler):
+def serve_path(path_name, handler):
     if callable(path_name):
         paths[path_name] = handler
     else:
@@ -18,8 +19,13 @@ def add_path(path_name, handler):
 def serve_directory(dir, mimetype="text/html"):
     two_slashes = "/" + dir + "/"
     one_slash = dir + "/"
-    add_path(lambda x: x.startswith(two_slashes), StaticDirectoryResponse(two_slashes, one_slash,
-                                                                          mimetype=mimetype))
+    serve_path(lambda x: x.startswith(two_slashes), StaticDirectoryResponse(two_slashes, one_slash,
+                                                                            mimetype=mimetype))
+
+
+def method_path(path_name, method):
+    assert callable(method)
+    methods[path_name] = method
 
 
 class ServerSentEvent:
@@ -136,6 +142,18 @@ class Handler(BaseHTTPRequestHandler):
         else:
             NOT_FOUND_RESPONSE.respond(self, parsed_path)
 
+    def do_POST(self):
+        parsed_path = urllib.parse.urlparse(self.path)
+        real_path = parsed_path.path
+
+        data_string = self.rfile.read(int(self.headers['Content-Length']))
+
+        if real_path in methods:
+            self.send_response(methods[real_path](self, real_path, data_string))
+        else:
+            self.send_response(404)
+        self.end_headers()
+
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """Handle requests in a separate thread."""
@@ -159,7 +177,7 @@ if __name__ == '__main__':
             time.sleep(1)
             yield ServerSentEvent(str(i)).encode()
 
-    add_path("/", FileResponse("templates/evttest.html"))
-    add_path("/eventsource", GeneratorResponse(gen))
+    serve_path("/", FileResponse("templates/evttest.html"))
+    serve_path("/eventsource", GeneratorResponse(gen))
 
     run()

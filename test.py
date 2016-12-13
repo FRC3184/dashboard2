@@ -21,6 +21,8 @@ dashboard.graph("sqrt(time)", lambda: sqrt)
 dashboard.graph("time^2", lambda: sq)
 dashboard.graph("Random", lambda: randint(-10, 10))
 
+dashboard.chooser("Ice Cream", ["Chocolate", "Vanilla", "Neapolitan"])
+
 try:
     while True:
         log = math.log(t)

@@ -1,4 +1,5 @@
 var name_map = {};
+var chooser_map = {};
 var buffer_size = 200;
 var my_grid = [100, 100];
 
@@ -49,6 +50,18 @@ var make_chart = function(data) {
 
   name_map[data.name] = my_chart;
 };
+var make_chooser = function(data) {
+  var chart_element = $("<select class=\"chooser\" data-name=\""+data.name+"\"></select>");
+
+  data.options.forEach(function(item) {
+    chart_element.append("<option value=\"" + item + "\">" + item + "</option>");
+  });
+  chart_element.appendTo("#dashboard");
+  chart_wrapper = $("<div class=\"element-wrap ui-widget-content\" style=\"height:100px;width:100px\" data-name=\"" + data.name + "\"></div>");
+  chart_wrapper.append($("<span>" + data.name + "</span><br />"));
+  chart_element.wrap(chart_wrapper);
+
+ };
 
 var source = new EventSource("/events");
 source.addEventListener('message', function(event) {
@@ -70,11 +83,14 @@ source.addEventListener("action", function(event) {
   console.log(data);
   switch (data.action) {
     default:
-      if (data.name in name_map) {
+      if (data.name in name_map || data.name in chooser_map) {
         break;
       }
     case "make_chart":
       make_chart(data);
+      break;
+    case "make_chooser":
+      make_chooser(data);
       break;
   }
 });
@@ -99,6 +115,11 @@ $(document).ready(function() {
 
     setTimeout(function() {
         $(".element-wrap").draggable(drag_opts).resizable(resize_opts).draggable("disable").resizable("disable");
+
+        $(".chooser").change(function() {
+            var datum = {name: $(this).data("name"), option: $(this).val()};
+            $.post("/update_chooser", JSON.stringify(datum))
+        });
 
         $("#editable-check").change(function() {
             $(".element-wrap").draggable(this.checked ? "enable" : "disable");
