@@ -49,10 +49,11 @@ function Chart(jq, name) {
                          MARGIN + i * width/count, MARGIN + height + 10)
         }
 
-        count = Math.round(real_height/40);
+        count = Math.round(real_height/30);
+        var step = (maxY - minY)/(count-1);
         for (var i = 0; i < count; i++) {
-            ctx.fillText("" + Math.round((minY + i * (maxY - minY)/count)*10)/10, 5,
-                         real_height - (MARGIN + 10 + i * height/count), MARGIN - 5)
+            ctx.fillText("" + Math.floor((minY + i * step)*100)/100, 5,
+                         real_height - (MARGIN + i * height/(count-1)), MARGIN - 5)
         }
 
         var first = true;
@@ -84,7 +85,7 @@ function Chart(jq, name) {
         if (BUFFER_SIZE < this.data.length) {
             this.drop_oldest();
         }
-        this.recalc_extrema();
+        //this.recalc_extrema();
         this.draw();
     };
     this.recalc_extrema = function() {
