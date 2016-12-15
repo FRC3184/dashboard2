@@ -1,4 +1,4 @@
-var BUFFER_SIZE = 200;
+var BUFFER_SIZE = 3000;
 var MARGIN = 30;
 
 function Chart(jq, name) {

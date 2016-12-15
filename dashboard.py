@@ -1,6 +1,7 @@
 import dashboard_server
 from dashboard_server import FileResponse, Response, GeneratorResponse, ServerSentEvent
 from queue import Queue
+from threading import Thread
 import json
 
 subscriptions = []
@@ -12,6 +13,12 @@ dashboard_server.serve_path("/", FileResponse("templates/index.html"))
 dashboard_server.serve_directory("js", mimetype="application/javascript")
 dashboard_server.serve_directory("images", mimetype="image/png")
 dashboard_server.serve_directory("css", mimetype="text/css")
+
+
+def run():
+    server_thread = Thread(target=dashboard_server.run)
+    server_thread.daemon = True
+    server_thread.start()
 
 
 def gen():

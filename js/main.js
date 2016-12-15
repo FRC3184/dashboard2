@@ -1,6 +1,5 @@
 var name_map = {};
 var chooser_map = {};
-var buffer_size = 200;
 var my_grid = [100, 100];
 
 var drag_opts = {

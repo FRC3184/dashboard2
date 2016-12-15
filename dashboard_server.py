@@ -126,6 +126,7 @@ class GeneratorResponse(Response):
 
 
 NOT_FOUND_RESPONSE = StaticResponse("404 Not Found", mimetype="text/plain", code=404)
+SERVER_ERROR_RESPONSE = StaticResponse("500 Internal Server Error", mimetype="text/plain", code=500)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -137,7 +138,11 @@ class Handler(BaseHTTPRequestHandler):
                 try:
                     response.respond(self, parsed_path)
                 except BrokenPipeError:
-                    pass  # Is okay
+                    pass  # Is okay, just a closed connection
+                except Exception as ex:
+                    SERVER_ERROR_RESPONSE.respond(self, parsed_path)
+                    raise ex
+
                 break
         else:
             NOT_FOUND_RESPONSE.respond(self, parsed_path)
