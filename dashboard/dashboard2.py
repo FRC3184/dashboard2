@@ -1,18 +1,19 @@
-import dashboard_server
-from dashboard_server import FileResponse, Response, GeneratorResponse, ServerSentEvent
+import json
 from queue import Queue
 from threading import Thread
-import json
+
+from dashboard import dashboard_server
+from dashboard.dashboard_server import FileResponse, GeneratorResponse, ServerSentEvent
 
 subscriptions = []
 graphs = {}
 choosers = {}
 chooser_status = {}
 
-dashboard_server.serve_path("/", FileResponse("templates/index.html"))
-dashboard_server.serve_directory("js", mimetype="application/javascript")
-dashboard_server.serve_directory("images", mimetype="image/png")
-dashboard_server.serve_directory("css", mimetype="text/css")
+dashboard_server.serve_path("/", FileResponse("dashboard/index.html"))
+dashboard_server.serve_directory("js", path="dashboard/js", mimetype="application/javascript")
+dashboard_server.serve_directory("images", path="dashboard/images", mimetype="image/png")
+dashboard_server.serve_directory("css", path="dashboard/css", mimetype="text/css")
 
 
 def run():

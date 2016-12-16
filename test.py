@@ -1,4 +1,4 @@
-import dashboard
+from dashboard import dashboard2 as dashboard
 from random import randint
 from time import sleep
 import math

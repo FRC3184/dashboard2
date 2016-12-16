@@ -1,5 +1,5 @@
 import wpilib
-import dashboard
+from dashboard import dashboard2 as dashboard
 import time
 
 

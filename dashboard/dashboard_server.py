@@ -16,9 +16,11 @@ def serve_path(path_name, handler):
         paths[lambda x: x == path_name] = handler
 
 
-def serve_directory(dir, mimetype="text/html"):
+def serve_directory(dir, mimetype="text/html", path=None):
+    if path is None:
+        path = dir
     two_slashes = "/" + dir + "/"
-    one_slash = dir + "/"
+    one_slash = path + "/"
     serve_path(lambda x: x.startswith(two_slashes), StaticDirectoryResponse(two_slashes, one_slash,
                                                                             mimetype=mimetype))
 
