@@ -1,7 +1,6 @@
 var name_map = {};
 var chooser_map = {};
 var my_grid = [100, 100];
-
 var drag_opts = {
     grid: my_grid,
     stop: function(evt, ui) {
@@ -61,6 +60,11 @@ var make_chooser = function(data) {
   chart_element.wrap(chart_wrapper);
 
  };
+ var make_extension = function(data) {
+    var element = $(data.html);
+    element.appendTo("#dashboard");
+    element.wrap($("<div class=\"element-wrap ui-widget-content\" data-name=\"" + data.name + "\"></div>"));
+ }
 
 var source = new EventSource("/events");
 source.addEventListener('message', function(event) {
@@ -85,6 +89,9 @@ source.addEventListener("action", function(event) {
       if (data.name in name_map || data.name in chooser_map) {
         break;
       }
+    case "make_extension":
+      make_extension(data);
+      break;
     case "make_chart":
       make_chart(data);
       break;

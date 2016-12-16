@@ -10,10 +10,46 @@ graphs = {}
 choosers = {}
 chooser_status = {}
 
+extensions = {}
+
+
+class ExtensionJSResponse(dashboard_server.Response):
+    def respond(self, handler, path):
+        self.begin(handler)
+        for ex_name, ex in extensions.items():
+            handler.wfile.write(ex.js.encode("U8"))
+        self.end(handler)
+
+
+class ExtensionCSSResponse(dashboard_server.Response):
+    def respond(self, handler, path):
+        self.begin(handler)
+        for ex_name, ex in extensions.items():
+            handler.wfile.write(ex.css.encode("U8"))
+        self.end(handler)
+
 dashboard_server.serve_path("/", FileResponse("dashboard/index.html"))
 dashboard_server.serve_directory("js", path="dashboard/js", mimetype="application/javascript")
 dashboard_server.serve_directory("images", path="dashboard/images", mimetype="image/png")
 dashboard_server.serve_directory("css", path="dashboard/css", mimetype="text/css")
+dashboard_server.serve_path("/extensions.js", ExtensionJSResponse(mimetype="application/javascript"))
+dashboard_server.serve_path("/extensions.css", ExtensionJSResponse(mimetype="text/css"))
+
+
+class Extension:
+    def __init__(self, name, html, js, css):
+        self.name = name
+        self.html = html
+        self.js = js
+        self.css = css
+
+
+def extension(name, html, js, css, callback_path=None, callback=None):
+    ex = Extension(name, html, js, css)
+    extensions[name] = ex
+
+    if callback_path is not None and callable(callback):
+        dashboard_server.method_path(callback_path, callback)
 
 
 def run():
@@ -28,6 +64,8 @@ def gen():
         q.put(ServerSentEvent(json.dumps({"action": "make_chart", "name": g}), "action"))
     for name, opts in choosers.items():
         q.put(ServerSentEvent(json.dumps({"action": "make_chooser", "name": name, "options": opts}), "action"))
+    for name, obj in extensions.items():
+        q.put(ServerSentEvent(json.dumps({"action": "make_extension", "name": name, "html": obj.html}), "action"))
     subscriptions.append(q)
     try:
         while True:
