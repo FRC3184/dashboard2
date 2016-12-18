@@ -8,6 +8,7 @@ from dashboard.dashboard_server import FileResponse, GeneratorResponse, ServerSe
 subscriptions = []
 graphs = {}
 choosers = {}
+indicators = {}
 chooser_status = {}
 
 extensions = {}
@@ -64,8 +65,11 @@ def gen():
         q.put(ServerSentEvent(json.dumps({"action": "make_chart", "name": g}), "action"))
     for name, opts in choosers.items():
         q.put(ServerSentEvent(json.dumps({"action": "make_chooser", "name": name, "options": opts}), "action"))
+    for name, _ in indicators.items():
+        q.put(ServerSentEvent(json.dumps({"action": "make_indicator", "name": name}), "action"))
     for name, obj in extensions.items():
         q.put(ServerSentEvent(json.dumps({"action": "make_extension", "name": name, "html": obj.html}), "action"))
+
     subscriptions.append(q)
     try:
         while True:
@@ -95,6 +99,10 @@ def chooser(name, options):
     chooser_status[name] = None
 
 
+def indicator(name, callback):
+    indicators[name] = callback
+
+
 def get_chooser(name):
     return chooser_status[name]
 
@@ -102,6 +110,8 @@ def get_chooser(name):
 def update(time):
     for g, v in graphs.items():
         send_message({"name": g, "time": time, "value": v()}, event="data")
+    for name, status in indicators.items():
+        send_message({"name": name, "status": status()}, event='indicator')
 
 
 def send_message(data, event=None):

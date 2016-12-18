@@ -60,6 +60,11 @@ var make_chooser = function(data) {
   chart_element.wrap(chart_wrapper);
 
  };
+ var make_indicator = function(data) {
+    var element = $("<span>" + data.name + "</span>");
+    element.appendTo("#dashboard");
+    element.wrap($("<div class=\"indicator inactive element-wrap ui-widget-content\" style=\"height:100px;width:100px\" data-name=\"" + data.name + "\"></div>"));
+};
  var make_extension = function(data) {
     var element = $(data.html);
     element.appendTo("#dashboard");
@@ -81,6 +86,21 @@ source.addEventListener('data', function(event) {
     name_map[name].add_point({x: t, y: y});
   }
 });
+source.addEventListener('indicator', function(event) {
+  var data = JSON.parse(event.data);
+  var name = data.name;
+  var status = data.status;
+
+  var element = $(".indicator[data-name='" + name + "']");
+  if (element.is(".inactive") && status) {
+    element.removeClass("inactive");
+    element.addClass("active");
+  }
+  else if (element.is(".active") && !status) {
+    element.removeClass("active");
+    element.addClass("inactive");
+  }
+});
 source.addEventListener("action", function(event) {
   var data = JSON.parse(event.data);
   console.log(data);
@@ -97,6 +117,9 @@ source.addEventListener("action", function(event) {
       break;
     case "make_chooser":
       make_chooser(data);
+      break;
+    case "make_indicator":
+      make_indicator(data);
       break;
   }
 });

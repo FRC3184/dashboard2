@@ -19,14 +19,23 @@ def sign(x):
     return x/abs(x) if x != 0 else 0
 
 
-def deadzone(x):
-    if abs(x) < 0.05:
+def deadzone(x, size=0.05):
+    if abs(x) < size:
         return 0
     return x
 
 
-def radius_turn(robot_drive, pow, turn, robot_width, max_radius):
+def max_turn_radius(D, sensitivity=.01):
+    return (1-sensitivity) * D / sensitivity
+
+
+def real_root(x, pow):
+    return sign(x) * abs(x)**pow
+
+
+def radius_turn(robot_drive, pow, turn, robot_width):
     D = robot_width
+    max_radius = max_turn_radius(D)
     if turn == 0:
         robot_drive.tankDrive(pow, pow)
         return
@@ -34,11 +43,12 @@ def radius_turn(robot_drive, pow, turn, robot_width, max_radius):
         turn_pow = turn
         robot_drive.tankDrive(turn_pow, -turn_pow)
         return
-    radius = sign(turn) * max_radius * (1 - abs(turn))
+    turn = real_root(turn, 1/7)  # Shift turn to turn faster at lower powers
+    radius = max_radius * (1 - abs(turn))
     Vo = pow
     Vi = Vo*abs(radius)/(abs(radius) + D)
 
-    if radius > 0:
+    if turn > 0:
         robot_drive.tankDrive(Vo, Vi)
     else:
         robot_drive.tankDrive(Vi, Vo)
@@ -57,16 +67,28 @@ class MyRobot(wpilib.IterativeRobot):
         self.width = 2
         self.top_speed = 15
 
+        self.teleop = lambda: False
+
         dashboard2.graph("Forward", self.joystick.getY)
         dashboard2.graph("Turn", self.joystick.getX)
         dashboard2.graph("Talon Left", self.talon_left.get)
         dashboard2.graph("Talon Right", self.talon_right.get)
         dashboard2.chooser("Drive", ["Radius", "Arcade"])
+        dashboard2.indicator("Teleop", self.teleop)
         simulbot.load(self.width, self.top_speed)
 
         self.time = 0
 
         dashboard2.run()
+
+    def teleopInit(self):
+        self.teleop = lambda: True
+
+    def autonomousInit(self):
+        self.teleop = lambda: False
+
+    def disabledInit(self):
+        self.teleop = lambda: False
 
     def disabledPeriodic(self):
         self.drive.tankDrive(0, 0)
@@ -74,12 +96,11 @@ class MyRobot(wpilib.IterativeRobot):
         dashboard2.update(self.time)
 
     def teleopPeriodic(self):
-        max_turn = 20
 
         turn = deadzone(self.joystick.getZ())
         forward = -deadzone(self.joystick.getY())
         if dashboard2.chooser_status['Drive'] in (None, "Radius"):
-            radius_turn(self.drive, forward, turn, self.width, max_turn)
+            radius_turn(self.drive, forward, turn, self.width)
         else:
             self.drive.arcadeDrive(forward, -turn)
 
@@ -88,7 +109,7 @@ class MyRobot(wpilib.IterativeRobot):
         dashboard2.update(self.time)
 
     def autonomousPeriodic(self):
-        radius_turn(self.drive, 1, 10, 2, 10)
+        radius_turn(self.drive, 1, 10, 2)
         simulbot.update(self.talon_left.get(), self.talon_right.get())
         self.time += delta()
         dashboard2.update(self.time)
