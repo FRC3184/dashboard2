@@ -205,5 +205,29 @@ $(document).ready(function() {
             }
         });
         console.log("Loaded positions");
-    }, 500)
+    }, 500);
+
+    setInterval(function() {
+        var elem = $("#robot-status")
+        switch (source.readyState) {
+        case 0:
+            elem.removeClass("connected");
+            elem.removeClass("closed");
+            elem.addClass("connecting");
+            elem.html("Connecting...");
+            break;
+        case 1:
+            elem.addClass("connected");
+            elem.removeClass("closed");
+            elem.removeClass("connecting");
+            elem.html("Connected!");
+            break;
+        case 2:
+            elem.removeClass("connected");
+            elem.addClass("closed");
+            elem.removeClass("connecting");
+            elem.html("Not connected!");
+            break;
+        }
+    }, 500);
 });

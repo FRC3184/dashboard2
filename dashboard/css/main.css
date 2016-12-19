@@ -23,3 +23,12 @@
 .indicator.active {
     background-color: green;
 }
+#robot-status.connecting {
+    color: yellow;
+}
+#robot-status.connected {
+    color: green;
+}
+#robot-status.closed {
+    color: red;
+}
