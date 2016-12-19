@@ -26,29 +26,47 @@ def deadzone(x, size=0.05):
 
 
 def max_turn_radius(D, sensitivity=.01):
-    return (1-sensitivity) * D / sensitivity
+    return (1-sensitivity)*(sensitivity + D/2)/(sensitivity - D/2)
 
 
 def real_root(x, pow):
     return sign(x) * abs(x)**pow
 
 
-def radius_turn(robot_drive, pow, turn, robot_width):
+def radius_drive(robot_drive, pow, turn, robot_width, max_radius):
+    """
+    Turns at a constant turn radius at a given power
+    :param robot_drive: wpilib.RobotDrive object
+    :param pow: The power to drive at. [-1, 1]
+    :param turn: The joystick turn value. [-1, 1]
+    :param robot_width: The track width of the robot
+    :param max_radius: The maximum turn radius of the robot, in units same as robot_width
+    """
     D = robot_width
-    max_radius = max_turn_radius(D)
-    if turn == 0:
+    if turn == 0:  # Special case to handle straight lines
         robot_drive.tankDrive(pow, pow)
         return
-    elif pow == 0:
-        turn_pow = turn
-        robot_drive.tankDrive(turn_pow, -turn_pow)
-        return
-    turn = real_root(turn, 1/7)  # Shift turn to turn faster at lower powers
-    radius = max_radius * (1 - abs(turn))
+    turn = real_root(turn, 1/3)  # Shift turn to turn faster at lower powers
+    radius = max_radius * (1 - abs(turn))  # Calculate the turn radius
     Vo = pow
-    Vi = Vo*abs(radius)/(abs(radius) + D)
+    # Calculate the inner wheel power
+    Vi = Vo * (radius - D/2) / (radius + D/2)
 
+    # Apply the calculated power to the correct wheels for the direction
     if turn > 0:
+        robot_drive.tankDrive(Vo, Vi)
+    else:
+        robot_drive.tankDrive(Vi, Vo)
+
+
+def radius_turn(robot_drive, pow, radius, robot_width):
+    D = robot_width
+    Vo = pow
+    # Calculate the inner wheel power
+    Vi = Vo * (abs(radius) - D / 2) / (abs(radius) + D / 2)
+
+    # Apply the calculated power to the correct wheels for the direction
+    if radius > 0:
         robot_drive.tankDrive(Vo, Vi)
     else:
         robot_drive.tankDrive(Vi, Vo)
@@ -100,7 +118,7 @@ class MyRobot(wpilib.IterativeRobot):
         turn = deadzone(self.joystick.getZ())
         forward = -deadzone(self.joystick.getY())
         if dashboard2.chooser_status['Drive'] in (None, "Radius"):
-            radius_turn(self.drive, forward, turn, self.width)
+            radius_drive(self.drive, forward, turn, self.width, 200)
         else:
             self.drive.arcadeDrive(forward, -turn)
 
@@ -109,7 +127,7 @@ class MyRobot(wpilib.IterativeRobot):
         dashboard2.update(self.time)
 
     def autonomousPeriodic(self):
-        radius_turn(self.drive, 1, 10, 2)
+        radius_drive(self.drive, 1, 10, 2)
         simulbot.update(self.talon_left.get(), self.talon_right.get())
         self.time += delta()
         dashboard2.update(self.time)
