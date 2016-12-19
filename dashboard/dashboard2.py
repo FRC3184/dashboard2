@@ -84,7 +84,8 @@ dashboard_server.serve_path("/events", GeneratorResponse(gen))
 
 def update_chooser(handler, path, data):
     data = json.loads(data.decode("U8"))
-    chooser_status[data['name']] = data['option']
+    opt = data['option']
+    chooser_status[data['name']] = opt if opt != "<Select>" else chooser_status[data['name']]
     return 200
 
 dashboard_server.method_path("/update_chooser", update_chooser)
@@ -94,9 +95,9 @@ def graph(name, callback):
     graphs[name] = callback
 
 
-def chooser(name, options):
+def chooser(name, options, default=None):
     choosers[name] = options
-    chooser_status[name] = None
+    chooser_status[name] = default
 
 
 def indicator(name, callback):

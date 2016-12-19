@@ -50,7 +50,7 @@ var make_chart = function(data) {
 };
 var make_chooser = function(data) {
   var chart_element = $("<select class=\"chooser\" data-name=\""+data.name+"\"></select>");
-
+  chart_element.append("<option>&lt;Select&gt;</option>");
   data.options.forEach(function(item) {
     chart_element.append("<option value=\"" + item + "\">" + item + "</option>");
   });
